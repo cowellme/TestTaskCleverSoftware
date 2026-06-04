@@ -1,0 +1,29 @@
+﻿
+<div class="modal show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger">Ошибка</h5>
+                <button type="button" class="btn-close" @onclick="CloseErrorModal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center gap-3">
+                    <p class="mb-0 text-secondary">@ErrorMessage</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string ErrorMessage { get; set; }
+
+    [Parameter]
+    public Action ClearErrorMessage { get; set; }
+
+    private void CloseErrorModal()
+    {
+        ClearErrorMessage?.Invoke();
+    }
+}

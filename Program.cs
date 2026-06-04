@@ -1,4 +1,5 @@
 using TestTaskCleverSoftware.Components;
+using TestTaskCleverSoftware.Services;
 
 namespace TestTaskCleverSoftware
 {
@@ -12,6 +13,10 @@ namespace TestTaskCleverSoftware
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            builder.Services.AddScoped<IFirstTaskService, FirstTaskService>();
+            builder.Services.AddScoped<ISecondTaskService, SecondTaskService>();
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -22,7 +27,7 @@ namespace TestTaskCleverSoftware
                 app.UseHsts();
             }
 
-            app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+            app.UseStatusCodePagesWithReExecute("/not-found");
             app.UseHttpsRedirection();
 
             app.UseAntiforgery();

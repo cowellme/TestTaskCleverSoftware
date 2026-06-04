@@ -1,0 +1,138 @@
+﻿@page "/second-task"
+@using TestTaskCleverSoftware.Services
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject ISecondTaskService SecondTaskService
+
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <ErrorModal ErrorMessage="@errorMessage" ClearErrorMessage="@ClearErrorMessage" />
+}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            <h3 class="text-center text-primary mb-4">Вторая задача</h3>
+            
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary mb-3">Настройка задержки (мс)</h5>
+                    
+                    <div class="input-group">
+                        <input @bind="delay"
+                               type="number"
+                               class="form-control"
+                               placeholder="Задержка..." />
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary mb-3">Запись</h5>
+                    
+                    <div class="input-group">
+                        <input @bind="addToCount"
+                               type="number"
+                               class="form-control"
+                               placeholder="Введите число..." />
+                        
+                        <button @onclick="SetCount"
+                                class="btn btn-outline-primary">
+                            Записать
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary mb-3">Чтение</h5>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex flex-column gap-1">
+                            <span class="text-secondary fw-semibold">Обновлено: @update</span>
+                            <span class="text-secondary fw-semibold">Счётчик: @count</span>
+                            <button @onclick="GetCount"
+                                    class="btn btn-outline-primary btn-sm">
+                                Прочитать
+                            </button>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <span class="d-block mb-3"><b>Настройка задержки</b> — задает эмуляцию загрузки сервера, и как понял по заданию пока идёт запись ни прочитать ни записать новые данные нельзя.</span>
+                    <span class="d-block mb-3"><b>Запись</b> — Отправляет на сервер задание с указанной задержкой сделать запись.</span>
+                    <span class="d-block mb-3"><b>Чтение</b> — Проверяет доступно ли чтение и выводит значение.</span>
+                    <span class="d-block"><b>Ошибка</b> — Показывает, что сервер в данный момент занят.</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private string addToCount = "";
+    private string? count = "";
+    private string errorMessage = "";
+    private string delay = "0";
+    
+    private DateTime update = DateTime.Now;
+
+    private void GetCount()
+    {
+        var status = SecondTaskService.GetStatus();
+        if (status)
+        {
+            SetError("Чтение сейчас не доступно, попробуйте позже...");
+            return;
+        }
+
+        count = SecondTaskService.GetCount().ToString();
+        update = DateTime.Now;
+        StateHasChanged();
+    }
+
+    private void SetError(string message)
+    {
+        errorMessage = message;
+        StateHasChanged();
+    }
+
+    private async Task SetCount()
+    {
+        var status = SecondTaskService.GetStatus();
+        if (status)
+        {
+            SetError("Запись сейчас не доступна, попробуйте позже..");
+            return;
+        }
+
+        await Task.Run(() =>
+        {
+            if (!int.TryParse(addToCount, out var result)) return;
+            if (int.TryParse(delay, out var resultDelay))
+            {
+                count = SecondTaskService.AddToCount(result, resultDelay).Result.ToString();
+            }
+            else
+            {
+                count = SecondTaskService.AddToCount(result).Result.ToString();
+            }
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void ClearErrorMessage()
+    {
+        errorMessage = "";
+        StateHasChanged();
+    }
+
+}

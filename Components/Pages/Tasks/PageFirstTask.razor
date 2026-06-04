@@ -1,0 +1,159 @@
+﻿@page "/first-task"
+@using TestTaskCleverSoftware.Services
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject IFirstTaskService FirstTaskService
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <ErrorModal ErrorMessage="@errorMessage" ClearErrorMessage="@ClearErrorMessage" />
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            <h3 class="text-center text-primary mb-4">Первая задача</h3>
+            
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary mb-3">Компрессия</h5>
+                    
+                    <div class="input-group">
+                        <input @bind="deCompressedStroke1"
+                               type="text"
+                               class="form-control"
+                               placeholder="Введите строку для сжатия..." />
+                        
+                        <button @onclick="CompressedStroke"
+                                class="btn btn-outline-primary">
+                            Сжать
+                        </button>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(compressedStroke1))
+                    {
+                        <div class="alert alert-secondary mt-3 p-2 small mb-0">
+                            <span class="text-secondary-emphasis">Результат:</span>
+                            <span class="fw-semibold ms-2 font-monospace">@compressedStroke1</span>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary mb-3">Декомпрессия</h5>
+                    
+                    <div class="input-group">
+                        <input @bind="compressedStroke2"
+                               type="text"
+                               class="form-control"
+                               placeholder="Введите сжатую строку..." />
+                        
+                        <button @onclick="DecompressedStroke"
+                                class="btn btn-outline-primary">
+                            Декомпрессировать
+                        </button>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(deCompressedStroke2))
+                    {
+                        <div class="alert alert-secondary mt-3 p-2 small mb-0">
+                            <span class="text-secondary-emphasis">Результат:</span>
+                            <span class="fw-semibold ms-2 font-monospace">@deCompressedStroke2</span>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary mb-3">Проверка эквивалентности</h5>
+                    
+                    <div class="d-flex gap-2 mb-3">
+                        <input @bind="checkStroke1"
+                               type="text"
+                               class="form-control"
+                               placeholder="Строка 1..." />
+                        
+                        <input @bind="checkStroke2"
+                               type="text"
+                               class="form-control"
+                               placeholder="Строка 2..." />
+                    </div>
+                    
+                    <button @onclick="Check"
+                            class="btn btn-outline-primary w-100">
+                        Проверить
+                    </button>
+                    
+                    @if (!string.IsNullOrEmpty(checkStroke1) && !string.IsNullOrEmpty(checkStroke2))
+                    {
+                        <div class="alert mt-3 p-2 small text-center mb-0 @(checkStroke1 == checkStroke2 ? "alert-success" : "alert-danger")">
+                            <span class="fw-bold">
+                                @(checkStroke1 == checkStroke2 ? "Эквивалентны" : "Различаются")
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <span class="d-block mb-3"><b>Компрессия</b> — Делает компрессию строки доступен ввод только букв.</span>
+                    <span class="d-block mb-3"><b>Декомпрессия</b> — Проводит декомпрессию строки.</span>
+                    <span class="d-block mb-3"><b>Проверка эквивалентности</b> — Проверка эквивалентны ли строки (сделал для больших строк).</span>
+                    <span class="d-block"><b>Ошибка</b> — Предупреждает о некорректном вводе.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private string checkStroke1 = "";
+    private string checkStroke2 = "";
+
+    private string compressedStroke1 = "";
+    private string deCompressedStroke1 = "aaabbcccdde";
+
+    private string compressedStroke2 = "a3b2c3d2e";
+    private string deCompressedStroke2 = "";
+
+    private string errorMessage = "";
+
+    private async Task CompressedStroke()
+    {
+        bool hasNonLetters = !string.IsNullOrEmpty(deCompressedStroke1) && deCompressedStroke1.Any(c => !char.IsLetter(c));
+
+        if(hasNonLetters)
+        {
+            SetError("Строка должна содержать только буквы");
+            return;
+        }
+
+        compressedStroke1 = await FirstTaskService.CompressStroke(deCompressedStroke1);
+        StateHasChanged();
+    }
+
+    private async Task DecompressedStroke()
+    {
+        deCompressedStroke2 = await FirstTaskService.DecompressStroke(compressedStroke2);
+        StateHasChanged();
+    }
+
+    private void SetError(string message)
+    {
+        errorMessage = message;
+        StateHasChanged();
+    }
+
+    private void ClearErrorMessage()
+    {
+        errorMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task Check() => await InvokeAsync(StateHasChanged);
+}
